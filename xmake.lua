@@ -64,7 +64,10 @@ target("architect") -- Architect: Litematica-style schematic blueprint overlay (
     end
     add_packages("levilamina")
     set_kind("shared")
-    set_languages("c++20")
+    -- C++23: LeviLamina 26.51 headers use std::to_underlying (Reflection.h).
+    -- The template's c++20 fails against the pinned line (CI evidence
+    -- 2026-10-13). Core stays C++20 (architect-tests) for portability.
+    set_languages("c++23")
     set_symbols("debug")
     add_headerfiles("src/**.h")
     add_files("src/**.cpp")
