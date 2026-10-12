@@ -55,17 +55,17 @@ jobs:
         run: xmake f -p windows -a x64 -m release -v -y --core_only=y
 
       - name: Build architect-tests
-        run: xmake build architect-tests -v -y
+        run: xmake build -v -y architect-tests
 
       - name: Run architect-tests
         shell: pwsh
         run: |
-          xmake run architect-tests -v -y 2>&1 | Tee-Object -FilePath test-output-windows.txt
+          xmake run -v -y architect-tests 2>&1 | Tee-Object -FilePath test-output-windows.txt
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - name: Diagnose on failure
         if: failure()
-        run: xmake build architect-tests --diagnosis -v -y
+        run: xmake show -t architect-tests
 
       - name: Upload test log on failure
         if: failure()
@@ -90,16 +90,16 @@ jobs:
         run: xmake f -p linux -a x86_64 -m release -v -y --core_only=y
 
       - name: Build architect-tests
-        run: xmake build architect-tests -v -y
+        run: xmake build -v -y architect-tests
 
       - name: Run architect-tests
         run: |
           set -o pipefail
-          xmake run architect-tests -v -y 2>&1 | tee test-output-linux.txt
+          xmake run -v -y architect-tests 2>&1 | tee test-output-linux.txt
 
       - name: Diagnose on failure
         if: failure()
-        run: xmake build architect-tests --diagnosis -v -y
+        run: xmake show -t architect-tests
 
       - name: Upload test log on failure
         if: failure()
