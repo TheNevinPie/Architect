@@ -1,0 +1,166 @@
+{
+  "version": 7,
+  "subVersion": 1,
+  "dataVersion": 4189,
+  "region": "test",
+  "position": [
+    10,
+    64,
+    -5
+  ],
+  "size": [
+    3,
+    2,
+    4
+  ],
+  "volume": 24,
+  "palette": [
+    {
+      "name": "minecraft:air",
+      "properties": {}
+    },
+    {
+      "name": "minecraft:stone",
+      "properties": {}
+    },
+    {
+      "name": "minecraft:oak_stairs",
+      "properties": {
+        "facing": "east",
+        "half": "bottom",
+        "shape": "straight",
+        "waterlogged": "false"
+      }
+    },
+    {
+      "name": "minecraft:glass",
+      "properties": {}
+    },
+    {
+      "name": "minecraft:oak_log",
+      "properties": {
+        "axis": "y"
+      }
+    },
+    {
+      "name": "minecraft:wall_torch",
+      "properties": {
+        "facing": "north"
+      }
+    },
+    {
+      "name": "minecraft:chest",
+      "properties": {
+        "facing": "south",
+        "type": "single",
+        "waterlogged": "false"
+      }
+    }
+  ],
+  "bits": 3,
+  "words": [
+    144115188881170625,
+    162
+  ],
+  "cells": {
+    "0": 1,
+    "1": 0,
+    "2": 3,
+    "3": 0,
+    "4": 2,
+    "5": 0,
+    "6": 0,
+    "7": 0,
+    "8": 0,
+    "9": 6,
+    "10": 0,
+    "11": 0,
+    "12": 0,
+    "13": 0,
+    "14": 0,
+    "15": 0,
+    "16": 0,
+    "17": 0,
+    "18": 0,
+    "19": 1,
+    "20": 0,
+    "21": 4,
+    "22": 0,
+    "23": 5
+  },
+  "tileEntities": [
+    {
+      "id": "minecraft:chest",
+      "x": 0,
+      "y": 0,
+      "z": 3
+    }
+  ],
+  "totalBlocks": 7,
+  "region2": {
+    "name": "upper",
+    "position": [
+      20,
+      70,
+      10
+    ],
+    "size": [
+      2,
+      1,
+      2
+    ],
+    "volume": 4,
+    "palette": [
+      {
+        "name": "minecraft:air",
+        "properties": {}
+      },
+      {
+        "name": "minecraft:brick_stairs",
+        "properties": {
+          "facing": "south",
+          "half": "top",
+          "shape": "inner_left",
+          "waterlogged": "false"
+        }
+      },
+      {
+        "name": "minecraft:glowstone",
+        "properties": {}
+      },
+      {
+        "name": "minecraft:furnace",
+        "properties": {
+          "facing": "north"
+        }
+      }
+    ],
+    "bits": 2,
+    "words": [
+      141
+    ],
+    "cells": {
+      "0": 1,
+      "1": 3,
+      "2": 0,
+      "3": 2
+    },
+    "tileEntities": [
+      {
+        "id": "minecraft:furnace",
+        "x": 1,
+        "y": 0,
+        "z": 0
+      }
+    ],
+    "totalBlocks": 3
+  },
+  "enclosingSize": [
+    12,
+    7,
+    17
+  ],
+  "regionCount": 2,
+  "totalVolume": 28,
+  "totalBlocksAll": 10
+}

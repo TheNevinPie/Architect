@@ -1,0 +1,178 @@
+# Architect core CI — SDK-free validation only.
+#
+# What this workflow is:
+#   Build + run the `architect-tests` target (pure C++20 + STL, no
+#   LeviLamina headers, no game files) on Windows (primary target
+#   platform) and Linux (portability proof for the SDK-free core), plus
+#   the Python fixture suites, fixture reproducibility, and repo hygiene.
+#
+# What this workflow is NOT:
+#   It never builds the `architect` client mod (needs the LeviLamina
+#   26.51.* package + clang-cl; see .github/workflows/build.yml) and it
+#   never touches Minecraft, GDK, or the render PoC. A green run here
+#   means "the data pipeline logic is correct", never "the mod builds".
+#
+# Caching: deliberately none. The core has no xmake package downloads
+# (nothing to cache) and a clean build each run cannot conceal stale
+# artifacts. Revisit only with content-hashed caches if runtimes grow.
+#
+# clang-format is intentionally absent: no local LLVM exists to verify a
+# clean baseline (see docs/TOOLCHAIN.md). tools/check_style.py covers
+# whitespace hygiene until then.
+#
+# Action pins follow repo policy (major tags + dependabot weekly):
+#   actions/checkout, actions/upload-artifact, actions/setup-python.
+
+name: core-ci
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  core-windows:
+    name: core tests (Windows)
+    runs-on: windows-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Setup xmake
+        uses: xmake-io/github-action-setup-xmake@v1
+        with:
+          xmake-version: ^3.0.0
+
+      - name: Configure
+        run: xmake f -p windows -a x64 -m release -v -y
+
+      - name: Build architect-tests
+        run: xmake build architect-tests -v -y
+
+      - name: Run architect-tests
+        shell: pwsh
+        run: |
+          xmake run architect-tests -v -y 2>&1 | Tee-Object -FilePath test-output-windows.txt
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Diagnose on failure
+        if: failure()
+        run: xmake build architect-tests --diagnosis -v -y
+
+      - name: Upload test log on failure
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: core-windows-test-log
+          path: test-output-windows.txt
+
+  core-linux:
+    name: core tests (Linux)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Setup xmake
+        uses: xmake-io/github-action-setup-xmake@v1
+        with:
+          xmake-version: ^3.0.0
+
+      - name: Configure
+        run: xmake f -p linux -a x86_64 -m release -v -y
+
+      - name: Build architect-tests
+        run: xmake build architect-tests -v -y
+
+      - name: Run architect-tests
+        run: |
+          set -o pipefail
+          xmake run architect-tests -v -y 2>&1 | tee test-output-linux.txt
+
+      - name: Diagnose on failure
+        if: failure()
+        run: xmake build architect-tests --diagnosis -v -y
+
+      - name: Upload test log on failure
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: core-linux-test-log
+          path: test-output-linux.txt
+
+  fixtures:
+    name: fixtures + python suites
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Regenerate fixtures
+        run: python tools/make_litematic_fixture.py
+
+      - name: Regenerate gzip vectors
+        run: python tools/gen_gzip_vectors.py
+
+      - name: Generated files reproducible
+        run: git diff --exit-code -- fixtures/ tests/cpp/GzipVectors.h
+
+      - name: Python suites
+        run: |
+          set -o pipefail
+          for t in test_bitpack test_transforms test_litematic_fixture test_verifier test_w2s test_nbt test_mapping; do
+            echo "== $t =="
+            python tests/python/$t.py 2>&1 | tee test-output-$t.txt
+          done
+
+      - name: Upload test logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: python-test-logs
+          path: test-output-*.txt
+
+  hygiene:
+    name: repo hygiene
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Required files present and not git-ignored
+        run: |
+          for f in xmake.lua tooth.json README.md CHANGELOG.md \
+                   docs/DATA_MODEL.md docs/NBT_INTERFACE.md docs/MODULE_BOUNDARIES.md \
+                   docs/TOOLCHAIN.md docs/RENDER_POC.md docs/PLAYBACK_STUDY.md \
+                   docs/ENGINEERING_REPORT_M1.md docs/ENGINEERING_REPORT_M2.md \
+                   docs/ENGINEERING_REPORT_M2_FOLLOWUP.md \
+                   docs/reference/ARCHITECT_FEASIBILITY_REPORT.md \
+                   fixtures/small.litematic fixtures/small.expected.json \
+                   tests/cpp/GzipVectors.h \
+                   src/architect/nbt/Gzip.h src/architect/nbt/Gzip.cpp \
+                   tests/cpp/TestGzip.cpp \
+                   tools/make_litematic_fixture.py tools/gen_gzip_vectors.py \
+                   tools/check_style.py; do
+            if [ ! -f "$f" ]; then echo "MISSING: $f"; exit 1; fi
+            if git check-ignore -q "$f"; then echo "IGNORED: $f"; exit 1; fi
+          done
+          echo "all required files present and tracked-visible"
+
+      - name: Style hygiene
+        run: python tools/check_style.py
