@@ -59,6 +59,10 @@ jobs:
 
       - name: Run architect-tests
         shell: pwsh
+        env:
+          # xmake run executes with CWD inside build/; point the
+          # end-to-end fixture leg at the checkout instead of probing.
+          ARCHITECT_FIXTURES_DIR: ${{ github.workspace }}/fixtures
         run: |
           xmake run -v -y architect-tests 2>&1 | Tee-Object -FilePath test-output-windows.txt
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
@@ -93,6 +97,8 @@ jobs:
         run: xmake build -v -y architect-tests
 
       - name: Run architect-tests
+        env:
+          ARCHITECT_FIXTURES_DIR: ${{ github.workspace }}/fixtures
         run: |
           set -o pipefail
           xmake run -v -y architect-tests 2>&1 | tee test-output-linux.txt

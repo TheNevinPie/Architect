@@ -9,6 +9,7 @@
 
 #include <cstdint>
 #include <cstdio>
+#include <cstdlib>
 #include <fstream>
 #include <sstream>
 #include <string>
@@ -209,16 +210,41 @@ int testGzip() {
     }
 
     // End-to-end: real compressed file -> model (multi-region assertions).
+    // Fixture lookup: $ARCHITECT_FIXTURES_DIR first (CI sets it to the
+    // checkout's fixtures/; xmake run executes with CWD in build/), then
+    // relative probes, then a developer-machine absolute fallback.
     {
         Bytes file;
-        const char* candidates[] = {
+        std::vector<std::string> candidates;
+        // $ARCHITECT_FIXTURES_DIR first (CI sets it; xmake run executes
+        // with CWD inside build/). _dupenv_s on MSVC avoids the C4996
+        // getenv deprecation without disabling warnings project-wide.
+        std::string envDir;
+#ifdef _MSC_VER
+        char* envBuf = nullptr;
+        std::size_t envLen = 0;
+        if (_dupenv_s(&envBuf, &envLen, "ARCHITECT_FIXTURES_DIR") == 0 && envBuf != nullptr) {
+            envDir = envBuf;
+            std::free(envBuf);
+        }
+#else
+        if (const char* e = std::getenv("ARCHITECT_FIXTURES_DIR")) {
+            envDir = e;
+        }
+#endif
+        if (!envDir.empty()) {
+            candidates.emplace_back(envDir + "/small.litematic");
+        }
+        candidates.insert(candidates.end(), {
             "fixtures/small.litematic",
             "../fixtures/small.litematic",
             "../../fixtures/small.litematic",
+            "../../../fixtures/small.litematic",
+            "../../../../fixtures/small.litematic",
             "C:/Projects/Architect/fixtures/small.litematic",
-        };
+        });
         bool found = false;
-        for (const char* c : candidates) {
+        for (const auto& c : candidates) {
             if (readFile(c, file)) {
                 found = true;
                 break;
