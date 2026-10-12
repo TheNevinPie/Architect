@@ -43,10 +43,13 @@ MUST be recorded here at first successful configure
    procedure — see `docs/RENDER_POC.md`. No engine behavior is claimed.
 3. **What IS verified today:** all pure-logic core (`transform`, `Bits`,
    `Verifier`, snapshot colours, bindings, NBT parser, litematic
-   decoder, mapping) via the Python fixture tests (159 checks) AND the
-   compiled C++ suites (79 checks, MSVC 14.51, exit 0, `/W4` clean).
-   The xmake `architect-tests` target + CI workflow (`ci.yml`) are
-   written and YAML-validated but NOT yet executed on runners.
+   decoder, mapping) via the Python fixture tests (171 checks) AND the
+   compiled C++ suites (116 checks, MSVC 14.51, exit 0, `/W4` clean).
+   Core CI (`ci.yml --core_only=y`) isolates the hermetic core from the
+   game dependency tree (see `ENGINEERING_REPORT_M2_FOLLOWUP.md` for the
+   first-run findings: `xmake f` resolves ALL top-level requires —
+   Windows-only `symbolprovider` broke Linux configure, and the
+   `levilamina` package itself failed to build on the Windows runner).
 
 ## Reproducible-build contract
 

@@ -8,19 +8,38 @@ option("target_type")
     set_values("server", "client")
 option_end()
 
+-- Set --core_only=y to configure just the SDK-free core (architect-tests)
+-- with ZERO game dependencies: no repository clones, no package downloads,
+-- no LeviLamina headers. Core CI uses this; full mod builds omit it.
+option("core_only")
+    set_default(false)
+    set_showmenu(true)
+    set_description("SDK-free core only (architect-tests), skip the game dependency tree")
+option_end()
+
+if not has_config("core_only") then
+add_repositories("levimc-repo https://github.com/LiteLDev/xmake-repo.git")
+end
+
 -- Pinned to the verified 26.51 client/server line (see docs/TOOLCHAIN.md).
 -- xmake-repo versions.txt lists 26.51.0-26.51.7; the 26.51.* pattern floats
 -- across patches within that line only. Record the exact resolved version
 -- from `xmake require --info levilamina` in docs/TOOLCHAIN.md at build time.
 -- tooth.json must name the same line (client variant).
+-- Skipped entirely under --core_only=y (core CI never resolves these).
+if not has_config("core_only") then
 add_requires("levilamina 26.51.*", {configs = {target_type = get_config("target_type")}})
 
 add_requires("levibuildscript")
+end
 
 if not has_config("vs_runtime") then
     set_runtimes("MD")
 end
 
+-- The game mod target needs the LeviLamina tree: skip it under --core_only=y
+-- (rules/packages would fail to resolve without their requires).
+if not has_config("core_only") then
 target("architect") -- Architect: Litematica-style schematic blueprint overlay (client mod).
     add_rules("@levibuildscript/linkrule")
     add_rules("@levibuildscript/modpacker")
@@ -58,11 +77,12 @@ target("architect") -- Architect: Litematica-style schematic blueprint overlay (
     --  add_files("src-client/**.cpp")
     end
 target_end()
+end -- core_only: architect target needs the game tree
 
 -- Pure-logic core tests. No LeviLamina dependency: builds with the host
--- MSVC toolchain (no clang-cl, no modpacker) so the core stays honest
--- about its SDK-free boundary. PROPOSED until CI runs it (docs/TOOLCHAIN.md).
--- Run: `xmake build architect-tests && xmake run architect-tests`
+-- toolchain (no clang-cl, no modpacker) so the core stays honest about
+-- its SDK-free boundary. Validated by core CI (--core_only=y).
+-- Run: `xmake f --core_only=y && xmake build architect-tests && xmake run architect-tests`
 target("architect-tests")
     set_kind("binary")
     set_languages("c++20")

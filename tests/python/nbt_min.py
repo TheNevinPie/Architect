@@ -76,12 +76,21 @@ def _w_payload(buf: bytearray, tag_type: int, value):
 
 
 def write_root_gzip(root: dict, root_name: str = "") -> bytes:
-    """root: {name: (tag_type, value)}. Returns gzip bytes (.litematic file)."""
+    """root: {name: (tag_type, value)}. Returns gzip bytes (.litematic file).
+
+    Deterministic: MTIME is fixed at 0 so regenerating fixtures yields
+    byte-identical files (CI enforces this with git diff --exit-code).
+    """
+    import gzip as _gzip
+    from io import BytesIO as _BytesIO
     buf = bytearray()
     buf += struct.pack(">b", TAG_COMPOUND)
     _w_string(buf, root_name)
     _w_payload(buf, TAG_COMPOUND, root)
-    return gzip.compress(bytes(buf))
+    out = _BytesIO()
+    with _gzip.GzipFile(filename="", mode="wb", fileobj=out, mtime=0) as gz:
+        gz.write(bytes(buf))
+    return out.getvalue()
 
 
 # ---------------- reader ----------------

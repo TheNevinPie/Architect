@@ -8,7 +8,7 @@ From the project root:
 python tools\make_litematic_fixture.py
 python tests\python\test_bitpack.py            # 32 checks
 python tests\python\test_transforms.py         # 23 checks
-python tests\python\test_litematic_fixture.py  # 50 checks
+python tests\python\test_litematic_fixture.py  # 62 checks
 python tests\python\test_verifier.py           # 14 checks
 python tests\python\test_w2s.py                # 10 checks
 python tests\python\test_nbt.py                # 15 checks

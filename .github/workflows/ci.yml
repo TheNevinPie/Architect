@@ -12,9 +12,10 @@
 #   never touches Minecraft, GDK, or the render PoC. A green run here
 #   means "the data pipeline logic is correct", never "the mod builds".
 #
-# Caching: deliberately none. The core has no xmake package downloads
-# (nothing to cache) and a clean build each run cannot conceal stale
-# artifacts. Revisit only with content-hashed caches if runtimes grow.
+# Caching: deliberately none. With --core_only=y there are no xmake
+# package downloads (nothing to cache) and a clean build each run cannot
+# conceal stale artifacts. Revisit only with content-hashed caches if
+# runtimes grow.
 #
 # clang-format is intentionally absent: no local LLVM exists to verify a
 # clean baseline (see docs/TOOLCHAIN.md). tools/check_style.py covers
@@ -51,7 +52,7 @@ jobs:
           xmake-version: ^3.0.0
 
       - name: Configure
-        run: xmake f -p windows -a x64 -m release -v -y
+        run: xmake f -p windows -a x64 -m release -v -y --core_only=y
 
       - name: Build architect-tests
         run: xmake build architect-tests -v -y
@@ -86,7 +87,7 @@ jobs:
           xmake-version: ^3.0.0
 
       - name: Configure
-        run: xmake f -p linux -a x86_64 -m release -v -y
+        run: xmake f -p linux -a x86_64 -m release -v -y --core_only=y
 
       - name: Build architect-tests
         run: xmake build architect-tests -v -y
@@ -125,8 +126,17 @@ jobs:
       - name: Regenerate gzip vectors
         run: python tools/gen_gzip_vectors.py
 
-      - name: Generated files reproducible
-        run: git diff --exit-code -- fixtures/ tests/cpp/GzipVectors.h
+      # Byte-diff applies ONLY to generator logic that is identical on
+      # every platform (expected.json: pure-Python packing, no zlib, no
+      # timestamps). Compressed binaries are INTENTIONALLY excluded: the
+      # gzip OS byte and deflate output vary between zlib builds
+      # (observed: zlib-ng on Windows vs classic zlib on Linux emit
+      # different-but-equally-valid members). The committed binaries stay
+      # canonical inputs for the C++ end-to-end test, and the freshly
+      # regenerated binaries are validated by the Python suites below —
+      # so a broken generator still fails this job, just at the right step.
+      - name: Generated logic reproducible
+        run: git diff --exit-code -- fixtures/small.expected.json
 
       - name: Python suites
         run: |
