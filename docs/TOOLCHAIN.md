@@ -12,7 +12,12 @@
 
 `26.51.*` floats across 26.51 patches only. The exact resolved version
 MUST be recorded here at first successful configure
-(`xmake require --info levilamina`): **pending — no successful configure yet (see blockers).**
+(`xmake require --info levilamina`):
+- **2026-10-13, CI full-mod build (green): `levilamina 26.51.7`**
+  (package path `packages\l\levilamina\26.51.7\` in the build log).
+  Requires **C++23** for the mod target (26.51 headers use
+  `std::to_underlying`); the template's `c++20` fails to compile them.
+  Core stays C++20.
 
 ## Local machine inventory (2026-10-13, `C:\Projects\Architect`)
 

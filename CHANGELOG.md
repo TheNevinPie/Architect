@@ -75,6 +75,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Results
 
 - C++ 116/116 green (`/W4` clean); Python suites green; fixture
-  generator deterministic. CI written + validated, not yet run (no push
-  authorized). No in-game rendering test yet.
+  generator deterministic. CI ran for real on 2026-10-13: core-ci 4/4
+  green (Windows + Linux + fixtures + hygiene) after fixing three
+  genuine issues (zlib-coupled byte-diff, top-level requires resolved
+  at configure → new `--core_only=y`, xmake flag order + fixture CWD).
+  Full mod build (client + server, LeviLamina 26.51.7) green after
+  bumping the mod target to C++23. No in-game rendering test yet.
 

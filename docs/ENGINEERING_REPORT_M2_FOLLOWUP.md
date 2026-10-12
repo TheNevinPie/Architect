@@ -27,14 +27,38 @@ Follows `docs/ENGINEERING_REPORT_M2.md`. Uncommitted, Architect root only.
   gzip→model path** (uncompressed-LE `.mcstructure` parses; `.schem`
   still deferred; negative sizes covered in unit tests).
 
-## P2 — GitHub Actions: READY, NOT RUN
+## P2 — GitHub Actions: RAN, ALL GREEN (2026-10-13)
 
-`ci.yml` extended (generated-vectors reproducibility, wider hygiene
-guard incl. the new files) and re-validated (YAML parse, pins,
-targets). Execution needs a push, which is **not authorized**
-(uncommitted-changes + no-push instructions stand). Exact state and how
-to run it are in the final report. No job has run anywhere; nothing is
-claimed.
+With push authorization, `core-ci` executed for real — and the first
+run caught **three genuine issues, all fixed without suppression**:
+
+1. **Fixture byte-diff was environment-coupled.** CI's classic zlib
+   emits a different gzip OS byte (and different deflate bytes) than
+   local zlib-ng — equally valid members, but `git diff` failed.
+   Fix: byte-diff only the zlib-independent `small.expected.json`;
+   regenerated binaries are validated by the Python suites instead.
+2. **`xmake f` resolves ALL top-level requires.** Core configure tried
+   to build the whole LeviLamina tree (Windows-only `symbolprovider`
+   broke Linux; the `levilamina` package itself failed on Windows).
+   Fix: `--core_only=y` option skips repos/requires/mod target —
+   core CI is now fully hermetic (no downloads).
+3. **xmake CLI flag order + fixture CWD.** Flags must precede the target
+   name; `xmake run` executes inside `build/`, so the E2E leg reads
+   `$ARCHITECT_FIXTURES_DIR` (exported in CI, probed locally).
+4. **Mod target needs C++23.** Full-mod build failed in
+   `ll/api/reflection/Reflection.h`: `std::to_underlying` under the
+   template's `c++20`. Bumped the `architect` target only; core stays C++20.
+
+Final state (2026-10-13):
+**core-ci 4/4 green** (Windows + Linux C++ suites incl. file end-to-end,
+fixtures + Python, hygiene) and **build.yml client + server green**
+(the complete native mod compiles against LeviLamina 26.51.7).
+Fix arc across runs `38299325211` → `38300807418` → `38301224888` →
+`38302235941` (first all-green core-ci) → `38304818123` + `38304818120`
+(final tree, both workflows green).
+Workflow: https://github.com/TheNevinPie/Architect/actions
+(select the `core-ci` workflow on the left; per-job logs and the
+"0 failure(s)" lines are in the run pages).
 
 ## P3 — rendering experiment: DESIGNED, NOT RUN
 
@@ -45,8 +69,9 @@ rules. No hook code written, no Playback code copied, no Playback
 dependency, no game run. Parser and renderer stay separated by the
 `RenderSnapshot` boundary.
 
-## Remaining blockers (unchanged in kind)
+## Remaining blockers
 
-1. Push authorization → CI first run → xmake/clang toolchain → full mod build.
-2. GDK game + launcher → in-game cube gate.
+1. ~~Push authorization → CI first run → xmake/clang toolchain → full mod build~~
+   DONE 2026-10-13 (CI green, mod builds; local xmake/Clang still absent).
+2. GDK game + launcher → in-game cube gate (the last unverified claim).
 3. `.schem` decoder, `.mcstructure` axis question, full mapping table.
